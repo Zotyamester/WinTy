@@ -1,10 +1,12 @@
 ﻿using Microsoft.Win32;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Configuration.Install;
 using System.Diagnostics;
 using System.IO;
+using System.Management.Automation;
+using System.Net;
 using System.ServiceProcess;
 using System.Text;
 
@@ -69,9 +71,50 @@ namespace WinTy
             }
         }
 
+        private static void InstallLatestRelease(string owner, string repo)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"https://api.github.com/repos/{ owner }/{ repo }/releases/latest");
+            request.ContentType = "application/vnd.github.v3+json";
+            request.UserAgent = "WinTy";
+
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+            using Stream responseStream = response.GetResponseStream();
+            using StreamReader streamReader = new StreamReader(responseStream, Encoding.UTF8);
+
+            string responseString = streamReader.ReadToEnd();
+            JObject root = JObject.Parse(responseString);
+            JArray assets = (JArray)root["assets"];
+            JObject msixbundle = null;
+            foreach (JObject asset in assets)
+            {
+                string name = (string)asset["name"];
+                if (name.EndsWith(".msixbundle"))
+                {
+                    msixbundle = asset;
+                    break;
+                }
+            }
+
+            WebClient client = new WebClient();
+            client.Headers.Add("User-Agent", "WinTy");
+            string remoteUrl = (string)(msixbundle["url"]);
+            string localUrl = Path.GetTempFileName();
+
+            client.DownloadFile(remoteUrl, localUrl);
+            Debug.WriteLine(localUrl);
+
+            PowerShell.Create().AddCommand("Set-ExecutionPolicy").AddParameter("Scope", "CurrentUser").AddParameter("ExecutionPolicy", "Unrestricted").Invoke();
+            PowerShell.Create().AddCommand("Import-Module").AddArgument("Appx").Invoke();
+            PowerShell.Create().AddCommand("Add-AppxPackage").AddParameter("Path", localUrl).Invoke();
+
+            File.Delete(localUrl);
+        }
+
         public static void InstallCliTools()
         {
-            throw new NotImplementedException();
+            InstallLatestRelease("microsoft", "winget-cli");
+            InstallLatestRelease("microsoft", "terminal");
         }
 
         private static void RunBlockingWithoutCli(string fileName, string arguments)
@@ -148,12 +191,38 @@ namespace WinTy
 
         public static void ActivateWindowsPhotoViewer()
         {
+            byte[] command = new byte[] { 37, 0, 83, 0, 121, 0, 115, 0, 116, 0, 101, 0, 109, 0, 82, 0, 111, 0, 111, 0, 116, 0, 37, 0, 92, 0, 83, 0, 121, 0, 115, 0, 116, 0, 101, 0, 109, 0, 51, 0, 50, 0, 92, 0, 114, 0, 117, 0, 110, 0, 100, 0, 108, 0, 108, 0, 51, 0, 50, 0, 46, 0, 101, 0, 120, 0, 101, 0, 32, 0, 34, 0, 37, 0, 80, 0, 114, 0, 111, 0, 103, 0, 114, 0, 97, 0, 109, 0, 70, 0, 105, 0, 108, 0, 101, 0, 115, 0, 37, 0, 92, 0, 87, 0, 105, 0, 110, 0, 100, 0, 111, 0, 119, 0, 115, 0, 32, 0, 80, 0, 104, 0, 111, 0, 116, 0, 111, 0, 32, 0, 86, 0, 105, 0, 101, 0, 119, 0, 101, 0, 114, 0, 92, 0, 80, 0, 104, 0, 111, 0, 116, 0, 111, 0, 86, 0, 105, 0, 101, 0, 119, 0, 101, 0, 114, 0, 46, 0, 100, 0, 108, 0, 108, 0, 34, 0, 44, 0, 32, 0, 73, 0, 109, 0, 97, 0, 103, 0, 101, 0, 86, 0, 105, 0, 101, 0, 119, 0, 95, 0, 70, 0, 117, 0, 108, 0, 108, 0, 115, 0, 99, 0, 114, 0, 101, 0, 101, 0, 110, 0, 32, 0, 37, 0, 49, 0, 0, 0 };
+
             RegistryKey key;
 
             key = Registry.ClassesRoot.CreateSubKey(@"Applications\photoviewer.dll\shell\open", true);
             if (key != null)
             {
-                key.SetValue("AllowTelemetry", 0x0000000c, RegistryValueKind.DWord);
+                key.SetValue("MuiVerb", "@photoviewer.dll,-3043", RegistryValueKind.String);
+            }
+
+            key = Registry.ClassesRoot.CreateSubKey(@"Applications\photoviewer.dll\shell\open\command", true);
+            if (key != null)
+            {
+                key.SetValue("MuiVerb", command, RegistryValueKind.Binary);
+            }
+
+            key = Registry.ClassesRoot.CreateSubKey(@"Applications\photoviewer.dll\shell\open\DropTarget", true);
+            if (key != null)
+            {
+                key.SetValue("Clsid", "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}", RegistryValueKind.String);
+            }
+
+            key = Registry.ClassesRoot.CreateSubKey(@"Applications\photoviewer.dll\shell\print\command", true);
+            if (key != null)
+            {
+                key.SetValue("MuiVerb", command, RegistryValueKind.Binary);
+            }
+
+            key = Registry.ClassesRoot.CreateSubKey(@"Applications\photoviewer.dll\shell\print\DropTarget", true);
+            if (key != null)
+            {
+                key.SetValue("Clsid", "{60fd46de-f830-4894-a628-6fa81bc0190d}", RegistryValueKind.String);
             }
         }
     }

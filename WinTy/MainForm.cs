@@ -64,5 +64,36 @@ namespace WinTy
             bStart.Enabled = true;
             lStatus.Text = "Done";
         }
+
+        private void SelectAll(bool value)
+        {
+            for (int i = 0; i < chklbComponents.Items.Count; i++)
+            {
+                chklbComponents.SetItemChecked(i, value);
+            }
+        }
+
+        private void rbAll_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbAll.Checked)
+            {
+                SelectAll(true);
+            }
+        }
+
+        private void rbNone_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rbNone.Checked)
+            {
+                SelectAll(false);
+            }
+        }
+
+        private void chklbComponents_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            rbAll.Checked = false;
+            rbNone.Checked = false;
+            rbCustom.Checked = true;
+        }
     }
 }
