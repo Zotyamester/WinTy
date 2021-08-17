@@ -5,6 +5,28 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SignAssembly>false</SignAssembly>
+    <Authors>Zoltán Szatmáry</Authors>
+    <Description>WinTy features a bunch of utility scripts needed after a fresh Windows installation.</Description>
+    <Copyright>Zoltán Szatmáry</Copyright>
+    <RepositoryUrl>https://github.com/Zotyamester/WinTy</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <NeutralLanguage>en</NeutralLanguage>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>registry;csharp;dotnet;winforms;hostsfile;remove-tracking</PackageTags>
+    <PackageReleaseNotes>First release of WinTy!</PackageReleaseNotes>
+    <StartupObject>WinTy.Program</StartupObject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningLevel>5</WarningLevel>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <WarningLevel>5</WarningLevel>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
