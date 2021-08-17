@@ -35,9 +35,9 @@ namespace WinTy
             this.worker = new System.ComponentModel.BackgroundWorker();
             this.lStatus = new System.Windows.Forms.Label();
             this.gbSelect = new System.Windows.Forms.GroupBox();
+            this.rbCustom = new System.Windows.Forms.RadioButton();
             this.rbNone = new System.Windows.Forms.RadioButton();
             this.rbAll = new System.Windows.Forms.RadioButton();
-            this.rbCustom = new System.Windows.Forms.RadioButton();
             this.gbSelect.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -104,6 +104,8 @@ namespace WinTy
             // 
             // gbSelect
             // 
+            this.gbSelect.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.gbSelect.Controls.Add(this.rbCustom);
             this.gbSelect.Controls.Add(this.rbNone);
             this.gbSelect.Controls.Add(this.rbAll);
@@ -113,6 +115,16 @@ namespace WinTy
             this.gbSelect.TabIndex = 1;
             this.gbSelect.TabStop = false;
             this.gbSelect.Text = "Select";
+            // 
+            // rbCustom
+            // 
+            this.rbCustom.AutoSize = true;
+            this.rbCustom.Location = new System.Drawing.Point(112, 15);
+            this.rbCustom.Name = "rbCustom";
+            this.rbCustom.Size = new System.Drawing.Size(67, 19);
+            this.rbCustom.TabIndex = 2;
+            this.rbCustom.Text = "Custom";
+            this.rbCustom.UseVisualStyleBackColor = true;
             // 
             // rbNone
             // 
@@ -138,16 +150,6 @@ namespace WinTy
             this.rbAll.UseVisualStyleBackColor = true;
             this.rbAll.CheckedChanged += new System.EventHandler(this.rbAll_CheckedChanged);
             // 
-            // rbCustom
-            // 
-            this.rbCustom.AutoSize = true;
-            this.rbCustom.Location = new System.Drawing.Point(112, 15);
-            this.rbCustom.Name = "rbCustom";
-            this.rbCustom.Size = new System.Drawing.Size(67, 19);
-            this.rbCustom.TabIndex = 2;
-            this.rbCustom.Text = "Custom";
-            this.rbCustom.UseVisualStyleBackColor = true;
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -158,6 +160,7 @@ namespace WinTy
             this.Controls.Add(this.pbCompletionStatus);
             this.Controls.Add(this.bStart);
             this.Controls.Add(this.chklbComponents);
+            this.MinimumSize = new System.Drawing.Size(320, 356);
             this.Name = "MainForm";
             this.Text = "WinTy";
             this.gbSelect.ResumeLayout(false);
