@@ -59,16 +59,50 @@ namespace WinTy
                 "feedback.search.microsoft.com"
             };
 
-            using (FileStream stream = new FileStream(@"C:\Windows\System32\drivers\etc\hosts", FileMode.Append, FileAccess.Write, FileShare.None))
+            Dictionary<string, string> entries = new Dictionary<string, string>();
+
+            // read and store existing entries
+            using (FileStream stream = new FileStream(@"C:\Windows\System32\drivers\etc\hosts", FileMode.OpenOrCreate, FileAccess.Read, FileShare.None))
+            using (StreamReader reader = new StreamReader(stream))
             {
-                using (StreamWriter writer = new StreamWriter(stream))
+                string line;
+                while ((line = reader.ReadLine()) != null)
                 {
-                    foreach (string ip in BlackList)
+                    line = line.Trim();
+                    if (line.Length != 0 && line[0] != '#') // don't try to parse comments, we'll just erase them
                     {
-                        writer.WriteLine($"0.0.0.0 {ip}");
+                        for (int i = 0; i < line.Length; i++)
+                        {
+                            if (line[i] == ' ' || line[i] == '\t')
+                            {
+                                // we have found a delimeter, thus we can now separate the "key" and the "not key" part of the line
+                                entries[line.Substring(i + 1)] = line.Substring(0, i);
+                                // we are no longer interested in looking for delimeters
+                                break;
+                            }
+                        }
                     }
                 }
             }
+
+            // we're putting it here, to make sure that none of the blacklisted hosts are getting whitelisted by the file's current entries
+            foreach (string ip in BlackList)
+            {
+                entries[ip] = "0.0.0.0";
+            }
+
+            // write out all entries
+            using (FileStream stream = new FileStream(@"C:\Windows\System32\drivers\etc\hosts", FileMode.Create, FileAccess.Write, FileShare.None))
+            using (StreamWriter writer = new StreamWriter(stream))
+            {
+                foreach (KeyValuePair<string, string> entry in entries)
+                {
+                    writer.WriteLine($"{entry.Value} {entry.Key}");
+                }
+            }
+
+            // flush dns cache
+            RunBlockingWithoutCli("ipconfig", "/flushdns");
         }
 
         private static void InstallLatestRelease(string owner, string repo)
@@ -163,27 +197,27 @@ namespace WinTy
 
         public static void RemoveOneDrive()
         {
-            // Closing OneDrive processes.
+            // closing OneDrive processes
             
             foreach (var process in Process.GetProcessesByName("OneDrive.exe"))
             {
                 try { process.Kill(true); } catch { }
             }
 
-            // Uninstalling OneDrive.
+            // uninstalling OneDrive
 
             string sysDir = Environment.Is64BitOperatingSystem ? "SysWOW64" : "System32";
             string setupPath = Environment.ExpandEnvironmentVariables($"%SYSTEMROOT%\\{ sysDir }\\OneDriveSetup.exe");
             try { Process.Start(setupPath, "/uninstall"); } catch { }
 
-            // Removing OneDrive leftovers.
+            // removing OneDrive leftovers
 
             try { Directory.Delete(Environment.ExpandEnvironmentVariables(@"%USERPROFILE%\OneDrive"), true); } catch { }
             try { Directory.Delete(@"C:\OneDriveTemp", true); } catch { }
             try { Directory.Delete(Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\Microsoft\OneDrive"), true); } catch { }
             try { Directory.Delete(Environment.ExpandEnvironmentVariables(@"%PROGRAMDATA%\Microsoft OneDrive"), true); } catch { }
 
-            // Removing OneDrive from the Explorer Side Panel.
+            // removing OneDrive from the Explorer Side Panel
 
             try { Registry.ClassesRoot.DeleteSubKey(@"CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}"); } catch { }
             try { Registry.ClassesRoot.DeleteSubKey(@"Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}"); } catch { }
